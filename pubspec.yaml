@@ -1,0 +1,49 @@
+name: minishop
+description: "MiniShop - A mini e-commerce Android app"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.8
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  provider: ^6.1.2
+  http: ^1.2.1
+  cached_network_image: ^3.4.1
+  shared_preferences: ^2.3.2
+  shimmer: ^3.0.0
+  flutter_rating_bar: ^4.0.1
+  connectivity_plus: ^6.0.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+  flutter_native_splash: ^2.4.5
+  image: ^4.2.0
+
+flutter:
+  uses-material-design: true
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: false
+  image_path: "assets/icon/icon.png"
+  adaptive_icon_background: "#3B4FD8"
+  adaptive_icon_foreground: "assets/icon/icon_fg.png"
+  min_sdk_android: 21
+
+flutter_native_splash:
+  color: "#3B4FD8"
+  image: "assets/icon/icon.png"
+  android: true
+  ios: false
+  web: false
+  android_12:
+    color: "#3B4FD8"
+    image: "assets/icon/icon.png"
+    icon_background_color: "#3B4FD8"
