@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/order.dart';
 
+/// Shown after a successful checkout. Displays the order ID, item count,
+/// total, and delivery address. No back navigation — the user returns home
+/// via the "Continue Shopping" button, which pops to the first route.
 class OrderSuccessScreen extends StatelessWidget {
   final Order order;
 
@@ -36,6 +39,8 @@ class OrderSuccessScreen extends StatelessWidget {
                     TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
+              // Use only the first non-empty word of the name to avoid
+              // showing "Thank you, John  Doe!" if there are extra spaces.
               Text(
                 'Thank you, ${order.name.trim().split(' ').where((w) => w.isNotEmpty).firstOrNull ?? order.name}!',
                 style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
@@ -46,6 +51,8 @@ class OrderSuccessScreen extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
+                  // popUntil(isFirst) pops back to HomeScreen regardless of
+                  // how many screens are on the stack.
                   onPressed: () => Navigator.popUntil(
                       context, (route) => route.isFirst),
                   child: const Text('Continue Shopping'),

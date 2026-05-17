@@ -4,6 +4,7 @@ import '../presenters/orders_presenter.dart';
 import '../models/order.dart';
 import '../widgets/error_view.dart';
 
+/// Displays all past orders, newest first, as expandable cards.
 class OrdersScreen extends StatelessWidget {
   const OrdersScreen({super.key});
 
@@ -30,6 +31,7 @@ class OrdersScreen extends StatelessWidget {
   }
 }
 
+/// A single order row that expands to show item lines and delivery info.
 class _OrderCard extends StatelessWidget {
   final Order order;
 
@@ -82,6 +84,7 @@ class _OrderCard extends StatelessWidget {
         children: [
           const Divider(height: 1),
           const SizedBox(height: 8),
+          // Item lines
           ...order.items.map((item) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 3),
                 child: Row(
@@ -109,6 +112,7 @@ class _OrderCard extends StatelessWidget {
                 ),
               )),
           const Divider(height: 16),
+          // Delivery info
           _infoRow(Icons.person_outline, order.name),
           const SizedBox(height: 4),
           _infoRow(Icons.location_on_outlined, order.address),
@@ -136,6 +140,7 @@ class _OrderCard extends StatelessWidget {
     );
   }
 
+  /// Formats a [DateTime] as "Jan 5, 2025  14:30" without importing intl.
   String _formatDate(DateTime dt) {
     const months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
+/// Shimmer placeholder that mirrors the layout of [ProductCard].
+/// Shown in the grid while the first page of products is loading.
 class SkeletonProductCard extends StatelessWidget {
   const SkeletonProductCard({super.key});
 
@@ -13,6 +15,7 @@ class SkeletonProductCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Mirrors the 4:3 image aspect ratio used by ProductCard.
             AspectRatio(
               aspectRatio: 4 / 3,
               child: Container(color: Colors.white),
@@ -29,6 +32,7 @@ class SkeletonProductCard extends StatelessWidget {
                     const SizedBox(height: 8),
                     Container(height: 12, width: 50, color: Colors.white),
                     const Spacer(),
+                    // Mirrors the cart button height.
                     Container(height: 28, color: Colors.white),
                   ],
                 ),
@@ -41,6 +45,9 @@ class SkeletonProductCard extends StatelessWidget {
   }
 }
 
+/// Full-screen skeleton grid used before the first data arrives.
+/// Kept for potential reuse; the home screen uses [SkeletonProductCard]
+/// directly inside its SliverGrid.
 class SkeletonGrid extends StatelessWidget {
   const SkeletonGrid({super.key});
 

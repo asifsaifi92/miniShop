@@ -2,6 +2,9 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 
+/// Animated banner that slides in when the device goes offline and slides out
+/// when connectivity is restored. Placed at the top of the home screen
+/// so it doesn't cover any interactive content.
 class ConnectivityBanner extends StatefulWidget {
   const ConnectivityBanner({super.key});
 
@@ -14,6 +17,8 @@ class _ConnectivityBannerState extends State<ConnectivityBanner>
   bool _isOffline = false;
   late StreamSubscription<List<ConnectivityResult>> _sub;
   late AnimationController _animController;
+
+  /// [SizeTransition] drives the banner height from 0 → natural height.
   late Animation<double> _heightAnim;
 
   @override
@@ -28,11 +33,13 @@ class _ConnectivityBannerState extends State<ConnectivityBanner>
       curve: Curves.easeInOut,
     );
     _sub = Connectivity().onConnectivityChanged.listen(_onConnectivityChanged);
+    // Check the initial state immediately; the stream only fires on changes.
     _checkInitial();
   }
 
   Future<void> _checkInitial() async {
     final result = await Connectivity().checkConnectivity();
+    // Guard against the widget being disposed before the async call returns.
     if (!mounted) return;
     _onConnectivityChanged(result);
   }

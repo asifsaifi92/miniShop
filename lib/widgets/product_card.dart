@@ -6,6 +6,10 @@ import '../presenters/cart_presenter.dart';
 import '../presenters/wishlist_presenter.dart';
 import '../screens/product_detail_screen.dart';
 
+/// Grid card showing a product thumbnail, title, rating, price, and cart button.
+///
+/// Wrapped in [RepaintBoundary] so Flutter can cache its raster layer and skip
+/// repainting this card when unrelated widgets above it change.
 class ProductCard extends StatelessWidget {
   final Product product;
 
@@ -80,6 +84,8 @@ class ProductCard extends StatelessWidget {
   Widget _buildImage() {
     return Stack(
       children: [
+        // Hero tag matches the one on ProductDetailScreen for the shared-element
+        // transition when tapping through to the detail page.
         Hero(
           tag: 'product-img-${product.id}',
           child: AspectRatio(
@@ -116,6 +122,8 @@ class ProductCard extends StatelessWidget {
         Positioned(
           top: 4,
           right: 4,
+          // Selector ensures only this heart icon rebuilds when the wishlist
+          // changes — not the entire card.
           child: Selector<WishlistPresenter, bool>(
             selector: (_, wl) => wl.contains(product.id),
             builder: (ctx, inWishlist, _) => GestureDetector(
@@ -127,6 +135,7 @@ class ProductCard extends StatelessWidget {
                   duration: const Duration(milliseconds: 200),
                   child: Icon(
                     inWishlist ? Icons.favorite : Icons.favorite_border,
+                    // ValueKey forces AnimatedSwitcher to animate between states.
                     key: ValueKey(inWishlist),
                     size: 16,
                     color: inWishlist ? Colors.red : Colors.grey,
@@ -140,6 +149,8 @@ class ProductCard extends StatelessWidget {
     );
   }
 
+  /// Inline row layout for discounted price: "discounted  ~~original~~".
+  /// Previously stacked vertically but that caused overflow in narrow cards.
   Widget _buildPrice(ColorScheme cs) {
     if (product.hasDiscount) {
       return Row(
@@ -174,6 +185,7 @@ class ProductCard extends StatelessWidget {
   }
 
   Widget _buildCartButton(BuildContext context) {
+    // Selector rebuilds only the button when this product's cart state changes.
     return Selector<CartPresenter, bool>(
       selector: (_, cart) => cart.contains(product.id),
       builder: (ctx, inCart, _) => _CartButton(
@@ -185,6 +197,9 @@ class ProductCard extends StatelessWidget {
   }
 }
 
+/// Animated cart button that switches between "Add to Cart" and "Added" states.
+/// Extracted into its own StatefulWidget to isolate the scale animation from
+/// the parent [ProductCard] rebuild cycle.
 class _CartButton extends StatefulWidget {
   final bool inCart;
   final VoidCallback onAdd;
@@ -220,6 +235,7 @@ class _CartButtonState extends State<_CartButton>
     super.dispose();
   }
 
+  /// Plays a quick press-down animation then calls the appropriate callback.
   void _onTap() {
     _ctrl.forward().then((_) => _ctrl.reverse());
     widget.inCart ? widget.onRemove() : widget.onAdd();
@@ -227,6 +243,8 @@ class _CartButtonState extends State<_CartButton>
 
   @override
   Widget build(BuildContext context) {
+    // Shared style keeps both button variants the same height (34 px) so the
+    // card layout doesn't shift when switching between "Add" and "Added".
     const btnStyle = ButtonStyle(
       minimumSize: WidgetStatePropertyAll(Size(0, 34)),
       tapTargetSize: MaterialTapTargetSize.shrinkWrap,

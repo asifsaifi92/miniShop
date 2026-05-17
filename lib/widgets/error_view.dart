@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+/// Full-screen error state with a retry button.
+/// Used when a network request fails and the product list is empty.
 class ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
@@ -47,6 +49,8 @@ class ErrorView extends StatelessWidget {
   }
 }
 
+/// Generic empty-state placeholder used across multiple screens
+/// (wishlist, orders, search results).
 class EmptyView extends StatelessWidget {
   final String message;
   final IconData icon;

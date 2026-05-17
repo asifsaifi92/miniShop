@@ -9,6 +9,8 @@ import '../presenters/wishlist_presenter.dart';
 import '../services/api_service.dart';
 import 'cart_screen.dart';
 
+/// Displays full product information: image gallery, rating, price, stock,
+/// description, brand, and a "You May Also Like" similar-products carousel.
 class ProductDetailScreen extends StatefulWidget {
   final Product product;
 
@@ -20,6 +22,9 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int _selectedImage = 0;
+
+  /// Similar products are fetched once in initState and cached in a Future so
+  /// navigating back/forward does not re-fire the API call.
   late final Future<List<Product>> _similarFuture;
 
   Product get p => widget.product;
@@ -29,6 +34,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     super.initState();
     _similarFuture = ApiService()
         .getProductsByCategory(p.category, limit: 10)
+        // Exclude the current product from the carousel.
         .then((list) => list.where((item) => item.id != p.id).toList());
   }
 
@@ -43,6 +49,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
+          // Consumer rebuilds only the heart icon when wishlist changes.
           Consumer<WishlistPresenter>(
             builder: (_, wl, _) => IconButton(
               icon: Icon(
@@ -52,6 +59,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               onPressed: () => wl.toggle(p),
             ),
           ),
+          // Cart badge in the app bar mirrors the one on the home screen.
           Consumer<CartPresenter>(
             builder: (_, cart, _) => Stack(
               children: [
@@ -141,6 +149,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
+  /// Main image occupies a 280 px hero that animates from the grid card.
+  /// Thumbnails below let the user switch the displayed image.
   Widget _buildImageGallery() {
     final images = p.images.isNotEmpty ? p.images : [p.thumbnail];
     return Stack(
@@ -149,6 +159,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           height: 280,
           width: double.infinity,
           child: Hero(
+            // Tag must match ProductCard's hero tag so the animation connects.
             tag: 'product-img-${p.id}',
             child: CachedNetworkImage(
               imageUrl: images[_selectedImage],
@@ -177,6 +188,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
             ),
           ),
+        // Thumbnail strip — only visible when the product has multiple images.
         if (images.length > 1)
           Positioned(
             bottom: 8,
@@ -266,6 +278,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
+  /// Shows a warning when fewer than 10 units remain to create urgency.
   Widget _buildStock() {
     final low = p.stock < 10;
     return Row(
@@ -316,6 +329,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
+  /// Similar products are loaded lazily via [FutureBuilder] so the rest of
+  /// the page renders immediately while the carousel fetches in the background.
   Widget _buildSimilarProducts() {
     return FutureBuilder<List<Product>>(
       future: _similarFuture,
@@ -347,6 +362,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 itemBuilder: (_, i) {
                   final item = items[i];
                   return GestureDetector(
+                    // pushReplacement keeps the back stack clean — tapping a
+                    // similar product replaces the current detail screen.
                     onTap: () => Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
@@ -423,6 +440,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
+  /// Shimmer placeholder shown while the similar-products future is pending.
   Widget _buildSimilarSkeleton() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -457,6 +475,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
   }
 
+  /// Bottom bar adapts based on cart state:
+  ///   - Not in cart → single "Add to Cart" button.
+  ///   - In cart → quantity stepper + "Go to Cart" button.
   Widget _buildBottomBar(BuildContext context) {
     return Consumer<CartPresenter>(
       builder: (_, cart, _) {

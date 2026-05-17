@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
 
+/// Centralised Material 3 theme for MiniShop.
+///
+/// All colour and shape decisions live here so changing the brand colour is a
+/// one-line edit. Screens reference [Theme.of(context).colorScheme] instead of
+/// hardcoding hex values so they automatically inherit overrides.
 class AppTheme {
+  /// Primary brand colour — indigo-blue used across app bars, buttons, and badges.
   static const primary = Color(0xFF3B4FD8);
+
+  /// Accent colour for highlights (currently unused by Material 3 by default).
   static const secondary = Color(0xFFF97316);
+
+  /// Scaffold background — light blue-grey that makes white cards pop.
   static const _bg = Color(0xFFF1F5F9);
 
   static ThemeData get light {
@@ -18,6 +28,8 @@ class AppTheme {
       appBarTheme: const AppBarTheme(
         centerTitle: false,
         elevation: 0,
+        // Prevent the app bar from gaining an elevation shadow when content
+        // scrolls underneath it — the floating SliverAppBar handles its own state.
         scrolledUnderElevation: 0,
         backgroundColor: primary,
         foregroundColor: Colors.white,
@@ -86,8 +98,10 @@ class AppTheme {
           borderRadius: BorderRadius.circular(20),
         ),
       ),
-      dividerTheme:
-          const DividerThemeData(space: 1, thickness: 0.6, color: Color(0xFFE2E8F0)),
+      dividerTheme: const DividerThemeData(
+          space: 1, thickness: 0.6, color: Color(0xFFE2E8F0)),
+      // Use iOS-style page transitions on both platforms for a consistent,
+      // premium feel without importing the cupertino package in every screen.
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: CupertinoPageTransitionsBuilder(),

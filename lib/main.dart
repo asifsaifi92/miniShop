@@ -11,6 +11,8 @@ void main() {
   runApp(const MiniShopApp());
 }
 
+/// Root widget. All presenters are created here so they remain alive for the
+/// entire app lifetime and are accessible from any descendant widget.
 class MiniShopApp extends StatelessWidget {
   const MiniShopApp({super.key});
 
@@ -18,9 +20,13 @@ class MiniShopApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // ProductsPresenter owns catalog, search, category filter, and sort state.
         ChangeNotifierProvider(create: (_) => ProductsPresenter()),
+        // CartPresenter persists cart to SharedPreferences on every mutation.
         ChangeNotifierProvider(create: (_) => CartPresenter()),
+        // WishlistPresenter persists wishlist to SharedPreferences on every mutation.
         ChangeNotifierProvider(create: (_) => WishlistPresenter()),
+        // OrdersPresenter persists order history to SharedPreferences.
         ChangeNotifierProvider(create: (_) => OrdersPresenter()),
       ],
       child: MaterialApp(

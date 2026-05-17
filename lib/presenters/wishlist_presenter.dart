@@ -4,11 +4,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../contracts/wishlist_contract.dart';
 import '../models/product.dart';
 
+/// Manages the wishlist and persists it to SharedPreferences.
+///
+/// Uses a [Map<int, Product>] internally (keyed by product ID) so [contains]
+/// and [toggle] are O(1) — important because the heart icon on every
+/// product card calls [contains] on each rebuild.
 class WishlistPresenter extends ChangeNotifier implements IWishlistPresenter {
   final Map<int, Product> _items = {};
   static const _prefKey = 'wishlist';
 
   WishlistPresenter() {
+    // Defer disk read to avoid "setState during build" in ChangeNotifier init.
     Future.microtask(_load);
   }
 
@@ -18,6 +24,7 @@ class WishlistPresenter extends ChangeNotifier implements IWishlistPresenter {
   @override
   bool contains(int productId) => _items.containsKey(productId);
 
+  /// Adds the product if not saved, removes it if already saved.
   @override
   void toggle(Product product) {
     if (_items.containsKey(product.id)) {

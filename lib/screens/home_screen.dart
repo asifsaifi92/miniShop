@@ -15,6 +15,7 @@ import 'cart_screen.dart';
 import 'wishlist_screen.dart';
 import 'orders_screen.dart';
 
+/// Main catalog screen: product grid, search, category chips, hot deals, sort.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -30,13 +31,19 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    // addPostFrameCallback ensures the widget tree is built before we call
+    // init() — calling it directly in initState can cause a "setState during
+    // build" error because init() triggers notifyListeners().
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ProductsPresenter>().init();
     });
     _scrollController.addListener(_onScroll);
+    // Rebuild only the search bar suffix icon when the text changes.
     _searchController.addListener(() => setState(() {}));
   }
 
+  /// Triggers the next page load when the user scrolls within 300 px of the
+  /// bottom — early enough that new cards appear before the list end is visible.
   void _onScroll() {
     if (!_scrollController.hasClients) return;
     if (_scrollController.position.pixels >=
@@ -45,6 +52,8 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// 500 ms debounce prevents firing a search request on every keystroke.
+  /// Empty / whitespace-only input cancels the current search immediately.
   void _onSearchChanged(String query) {
     _debounce?.cancel();
     if (query.trim().isEmpty) {
@@ -74,6 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
               parent: AlwaysScrollableScrollPhysics()),
           slivers: [
             _buildSliverAppBar(context),
+            // ConnectivityBanner slides in / out when network state changes.
             const SliverToBoxAdapter(child: ConnectivityBanner()),
             SliverToBoxAdapter(child: _buildSearchBar()),
             SliverToBoxAdapter(child: _buildCategoryChips(provider)),
@@ -112,6 +122,8 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       actions: [
+        // Selector rebuilds only this subtree when itemCount changes,
+        // instead of rebuilding the entire AppBar on every cart mutation.
         Selector<CartPresenter, int>(
           selector: (_, cart) => cart.itemCount,
           builder: (_, count, _) => Stack(
@@ -128,6 +140,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 Positioned(
                   right: 6,
                   top: 8,
+                  // ValueKey(count) makes AnimatedSwitcher treat each count
+                  // value as a distinct child and play the scale animation.
                   child: AnimatedSwitcher(
                     duration: const Duration(milliseconds: 250),
                     transitionBuilder: (child, anim) =>
@@ -154,6 +168,7 @@ class _HomeScreenState extends State<HomeScreen> {
           onPressed: () => Navigator.push(context,
               MaterialPageRoute(builder: (_) => const WishlistScreen())),
         ),
+        // Highlight the sort icon in amber when a non-default sort is active.
         Selector<ProductsPresenter, SortOption>(
           selector: (_, p) => p.sortOption,
           builder: (_, sort, _) => IconButton(
@@ -192,6 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 TextStyle(color: Colors.grey.shade400, fontSize: 14),
             prefixIcon:
                 Icon(Icons.search_rounded, color: Colors.grey.shade400),
+            // Clear button is shown only when the search field has text.
             suffixIcon: _searchController.text.isNotEmpty
                 ? IconButton(
                     icon: Icon(Icons.clear_rounded,
@@ -225,6 +241,7 @@ class _HomeScreenState extends State<HomeScreen> {
         itemBuilder: (_, i) {
           final cat = provider.categories[i];
           final selected = provider.selectedCategory == cat;
+          // Convert API slug "beauty-care" → title-cased "Beauty Care".
           final label = cat == 'all'
               ? 'All'
               : cat
@@ -247,6 +264,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               selected: selected,
               onSelected: (_) {
+                    // Cancel any pending debounce and clear the search field
+                    // so the category filter takes effect immediately.
                     _debounce?.cancel();
                     _searchController.clear();
                     provider.selectCategory(cat);
@@ -293,6 +312,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Text(label,
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.bold)),
+                // The '+' suffix indicates more pages are available.
                 Text(
                   '${provider.products.length}${provider.hasMore ? '+' : ''} items',
                   style: TextStyle(
@@ -301,6 +321,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
+          // Active sort pill — tapping opens the sort sheet.
           if (provider.sortOption != SortOption.none)
             Container(
               padding:
@@ -329,7 +350,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// Builds the grid sliver, shimmer placeholders, error view, or empty state
+  /// depending on the current [LoadState].
   List<Widget> _buildProductContent(ProductsPresenter provider) {
+    // Initial load — show skeleton grid while waiting.
     if (provider.state == LoadState.loading && provider.products.isEmpty) {
       return [
         SliverPadding(
@@ -365,6 +389,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ];
     }
 
+    // Append 2 skeleton cards at the end while the next page is loading.
     final total = provider.products.length +
         (provider.hasMore && provider.state == LoadState.loading ? 2 : 0);
     return [
@@ -377,6 +402,8 @@ class _HomeScreenState extends State<HomeScreen> {
               if (i >= provider.products.length) {
                 return const SkeletonProductCard();
               }
+              // ValueKey prevents Flutter from reusing a card widget for a
+              // different product when the list is refreshed.
               return _EntranceCard(
                 key: ValueKey(provider.products[i].id),
                 index: i,
@@ -401,6 +428,10 @@ class _HomeScreenState extends State<HomeScreen> {
 // ─────────────────────────────────────────
 // Staggered entrance animation wrapper
 // ─────────────────────────────────────────
+
+/// Wraps a card in a fade + slide-up entrance animation.
+/// Only the first 8 items stagger (index < 8); items loaded by pagination
+/// appear instantly to avoid animation pile-ups during rapid scrolling.
 class _EntranceCard extends StatefulWidget {
   final int index;
   final Widget child;
@@ -429,6 +460,7 @@ class _EntranceCardState extends State<_EntranceCard>
       end: Offset.zero,
     ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
 
+    // Stagger first-page cards by 55 ms each; beyond that animate immediately.
     final delay = widget.index < 8
         ? Duration(milliseconds: widget.index * 55)
         : Duration.zero;

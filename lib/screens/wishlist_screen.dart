@@ -4,6 +4,8 @@ import '../presenters/wishlist_presenter.dart';
 import '../widgets/product_card.dart';
 import '../widgets/error_view.dart';
 
+/// Grid of all wishlisted products. Uses the same [ProductCard] as the home
+/// screen so the heart-toggle and add-to-cart behaviour are identical.
 class WishlistScreen extends StatelessWidget {
   const WishlistScreen({super.key});
 
@@ -23,6 +25,8 @@ class WishlistScreen extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             physics: const BouncingScrollPhysics(
                 parent: AlwaysScrollableScrollPhysics()),
+            // cacheExtent pre-renders cards up to 600 px outside the viewport
+            // to reduce blank flashes while scrolling.
             cacheExtent: 600,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,

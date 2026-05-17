@@ -5,6 +5,7 @@ import '../presenters/cart_presenter.dart';
 import '../models/cart_item.dart';
 import 'checkout_screen.dart';
 
+/// Displays all cart items with per-item quantity controls and a checkout CTA.
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
 
@@ -57,6 +58,9 @@ class CartScreen extends StatelessWidget {
                   physics: const BouncingScrollPhysics(
                       parent: AlwaysScrollableScrollPhysics()),
                   itemCount: cart.items.length,
+                  // ValueKey ties each tile to its product ID so Flutter can
+                  // animate insertions/deletions correctly instead of reusing
+                  // the wrong tile widget when items are removed mid-list.
                   itemBuilder: (_, i) => _CartItemTile(
                         key: ValueKey(cart.items[i].product.id),
                         item: cart.items[i],
@@ -104,6 +108,9 @@ class CartScreen extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (_) => CheckoutScreen(
+                  // Snapshot the items and total at navigation time so
+                  // CheckoutScreen shows a stable summary even if the cart
+                  // changes in the background.
                   items: cart.items,
                   total: cart.total,
                 ),
@@ -139,6 +146,8 @@ class CartScreen extends StatelessWidget {
   }
 }
 
+/// A single cart row: thumbnail, title, price-per-unit, quantity stepper,
+/// line total, and a delete button.
 class _CartItemTile extends StatelessWidget {
   final CartItem item;
 
@@ -146,6 +155,9 @@ class _CartItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // context.read is used here (not watch) because mutations trigger a
+    // Consumer rebuild above — reading the presenter directly avoids a
+    // second rebuild from watch.
     final cart = context.read<CartPresenter>();
     final p = item.product;
     return Card(
@@ -204,6 +216,7 @@ class _CartItemTile extends StatelessWidget {
                         onTap: () => cart.increment(p.id),
                       ),
                       const Spacer(),
+                      // Line total = discounted price × quantity.
                       Text(
                         '\$${item.total.toStringAsFixed(2)}',
                         style: const TextStyle(

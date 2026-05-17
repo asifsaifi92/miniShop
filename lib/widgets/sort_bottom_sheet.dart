@@ -3,6 +3,12 @@ import 'package:provider/provider.dart';
 import '../contracts/products_contract.dart';
 import '../presenters/products_presenter.dart';
 
+/// Modal bottom sheet for selecting the product grid sort order.
+///
+/// [show] is a static factory that re-injects the existing [ProductsPresenter]
+/// into the sheet's subtree via [ChangeNotifierProvider.value] — necessary
+/// because [showModalBottomSheet] creates a new widget tree that has no access
+/// to the parent's [InheritedWidget] ancestors.
 class SortBottomSheet extends StatelessWidget {
   const SortBottomSheet({super.key});
 
@@ -35,6 +41,7 @@ class SortBottomSheet extends StatelessWidget {
               style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
+            // Render one ListTile per SortOption enum value.
             ...SortOption.values.map((option) {
               final selected = provider.sortOption == option;
               return ListTile(

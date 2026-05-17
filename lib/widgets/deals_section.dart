@@ -4,6 +4,10 @@ import 'package:provider/provider.dart';
 import '../presenters/products_presenter.dart';
 import '../screens/product_detail_screen.dart';
 
+/// Horizontal strip of products that have ≥ 15 % discount, sorted by
+/// discount percentage descending. The list is pre-computed by
+/// [ProductsPresenter] and cached in [ProductsPresenter.deals] so this widget
+/// never performs any filtering or sorting itself.
 class DealsSection extends StatelessWidget {
   const DealsSection({super.key});
 
@@ -32,6 +36,7 @@ class DealsSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 6),
+              // Pill badge showing the number of deal items available.
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
@@ -93,6 +98,7 @@ class DealsSection extends StatelessWidget {
                                   Icons.broken_image,
                                   color: Colors.grey),
                             ),
+                            // Discount badge overlaid on the top-left of the image.
                             Positioned(
                               top: 6,
                               left: 6,

@@ -1,3 +1,5 @@
+/// Immutable data class representing a single product from the DummyJSON API.
+/// All monetary computations are kept here so no screen re-derives them.
 class Product {
   final int id;
   final String title;
@@ -25,11 +27,15 @@ class Product {
     required this.images,
   });
 
+  /// Price after applying the discount. Returns [price] unchanged when there
+  /// is no discount, avoiding floating-point rounding on the full price.
   double get discountedPrice =>
       discountPercentage > 0 ? price * (1 - discountPercentage / 100) : price;
 
   bool get hasDiscount => discountPercentage > 0;
 
+  /// Serialises to the same key names used by DummyJSON so the object can be
+  /// round-tripped through SharedPreferences without a separate DTO.
   Map<String, dynamic> toJson() => {
         'id': id,
         'title': title,
@@ -44,6 +50,8 @@ class Product {
         'images': images,
       };
 
+  /// All numeric fields are cast via `(num?)?.toX()` because the JSON API
+  /// can return integers or doubles interchangeably (e.g. price: 10 vs 10.0).
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
       id: (json['id'] as num?)?.toInt() ?? 0,

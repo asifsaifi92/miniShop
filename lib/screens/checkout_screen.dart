@@ -5,6 +5,11 @@ import '../presenters/cart_presenter.dart';
 import '../presenters/orders_presenter.dart';
 import 'order_success_screen.dart';
 
+/// Collects delivery details, validates them, and places the order.
+///
+/// The cart items and total are passed in from [CartScreen] so this screen
+/// has no dependency on the cart presenter for display purposes — it only
+/// reads the presenter to call [placeOrder] and [clear] at the end.
 class CheckoutScreen extends StatefulWidget {
   final List<CartItem> items;
   final double total;
@@ -21,6 +26,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _nameCtrl = TextEditingController();
   final _addressCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
+
+  /// True while the 800 ms simulated processing delay is running.
   bool _placing = false;
 
   @override
@@ -70,6 +77,8 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               keyboardType: TextInputType.phone,
               validator: (v) {
                 if (v == null || v.trim().isEmpty) return 'Phone is required';
+                // Strip formatting characters before counting digits so both
+                // "+1 (555) 123-4567" and "5551234567" pass validation.
                 final digits = v.trim().replaceAll(RegExp(r'[\s\-\(\)\+]'), '');
                 if (!RegExp(r'^\d{7,15}$').hasMatch(digits)) {
                   return 'Enter a valid phone number';
@@ -84,6 +93,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             _buildPriceRow('Total', widget.total, isBold: true),
             const SizedBox(height: 24),
             FilledButton(
+              // Disable the button while the order is being processed.
               onPressed: _placing ? null : _placeOrder,
               child: _placing
                   ? const SizedBox(
@@ -175,6 +185,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
+  /// Validates the form, waits 800 ms (simulates processing), places the order,
+  /// clears the cart, then navigates to the success screen — removing all
+  /// intermediate routes so the back button returns to the home screen.
   Future<void> _placeOrder() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _placing = true);
