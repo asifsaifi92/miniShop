@@ -1,184 +1,301 @@
-# MiniShop
+# MiniShop — Flutter E-Commerce App
 
-A Flutter e-commerce Android app demonstrating a complete end-to-end shopping flow — catalog → product detail → cart → checkout → order confirmation — built with **MVP architecture** and **Material Design 3**.
+> A fully functional Android e-commerce app built with Flutter, following **MVP architecture**, **Material Design 3**, and production-level engineering practices.
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Screenshots](#screenshots)
+- [Architecture](#architecture)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Project Structure](#project-structure)
+- [Unit Tests](#unit-tests)
+- [Setup & Running](#setup--running)
+- [API Reference](#api-reference)
+- [Design Decisions & Trade-offs](#design-decisions--trade-offs)
+
+---
+
+## Overview
+
+MiniShop is a complete end-to-end shopping app that covers every screen a real e-commerce product would need:
+
+**Catalog → Search / Filter → Product Detail → Cart → Checkout → Order Confirmation → Order History → Wishlist**
+
+Built as a Maruti Suzuki interview assignment. The goal was to demonstrate clean architecture, thoughtful UI/UX, robust state management, and solid engineering practices — not just make something that works.
+
+### Key Engineering Highlights
+
+- **Strict MVP separation** — Views contain zero business logic; all state lives in Presenters behind abstract interfaces
+- **Interface-driven design** — Every presenter implements a contract (`IXxxPresenter`), making the codebase fully testable and presenter-swappable without touching any screen
+- **Persistent state** — Cart, wishlist, and orders all survive app restarts via JSON serialisation to `SharedPreferences`
+- **61 passing unit tests** — Presenters, models, and service layer fully covered using a `FakeRepository` (no real HTTP calls)
+- **Performance-conscious UI** — `RepaintBoundary`, `Selector<T,S>` for scoped rebuilds, `cacheExtent`, `ValueKey`, and staggered entrance animations
 
 ---
 
 ## Screenshots
 
 ### Home Screen
-Browse 194 products in a responsive grid. Hot Deals strip highlights top discounts. Category chips and live search filter the catalog instantly.
+Browse 194 products in a two-column grid with infinite scroll. The **Hot Deals** strip highlights the biggest discounts. **Category chips** and a live **search bar** (500 ms debounce) filter the catalog without leaving the screen.
 
-<p float="left">
-  <img src="screenshots/home_screen.jpg" width="280" alt="Home Screen" />
+<p>
+  <img src="screenshots/home_screen.jpg" width="260" alt="Home Screen" />
   &nbsp;&nbsp;
-  <img src="screenshots/home_sort.jpg" width="280" alt="Home Screen – Sort Bottom Sheet" />
+  <img src="screenshots/home_sort.jpg" width="260" alt="Sort Bottom Sheet" />
 </p>
 
 ---
 
 ### Product Detail
-Full image gallery with thumbnail strip, star rating, discounted price badge, stock level, and similar-products carousel.
+Hero transition from the grid card. Full **image gallery** with a tappable thumbnail strip, **star rating**, discount badge, stock level, brand info, and a lazy-loaded **"You May Also Like"** carousel (shimmer skeleton while loading).
 
-<p float="left">
-  <img src="screenshots/product_detail.jpg" width="280" alt="Product Detail Screen" />
+<p>
+  <img src="screenshots/product_detail.jpg" width="260" alt="Product Detail" />
 </p>
 
 ---
 
 ### Cart
-Per-item quantity controls, line totals, cart total, and one-tap checkout. Cart survives app restarts via SharedPreferences.
+Per-item **quantity stepper**, line totals, cart grand total, and a single-tap checkout CTA. The bottom bar adapts on the detail screen — quantity controls appear once a product is added. Cart is **persisted** and rehydrated on every launch.
 
-<p float="left">
-  <img src="screenshots/cart_screen.jpg" width="280" alt="Cart Screen" />
+<p>
+  <img src="screenshots/cart_screen.jpg" width="260" alt="Cart Screen" />
 </p>
 
 ---
 
 ### Checkout
-Order summary with delivery form (name, address, phone). Full validation before the order is placed.
+Itemised **order summary** at the top. Delivery form with full validation (required fields + phone number regex). An 800 ms loading indicator simulates server processing. On success the cart is cleared and the user is taken to the confirmation screen.
 
-<p float="left">
-  <img src="screenshots/checkout_screen.jpg" width="280" alt="Checkout Screen" />
+<p>
+  <img src="screenshots/checkout_screen.jpg" width="260" alt="Checkout Screen" />
 </p>
 
 ---
 
 ### Order Confirmation
-Unique order ID, customer name, delivery address, and itemised order summary shown after a successful purchase.
+Unique order ID (`ORD-<timestamp>`), personalised greeting, item count, total, and delivery address. The "Continue Shopping" button pops all the way back to the home screen.
 
-<p float="left">
-  <img src="screenshots/order_success.jpg" width="280" alt="Order Success Screen" />
+<p>
+  <img src="screenshots/order_success.jpg" width="260" alt="Order Placed" />
 </p>
 
 ---
 
 ### Order History
-All past orders in a scrollable list. Each card shows order ID, date, total, and expandable item breakdown.
+Every past order in a scrollable list, **newest first**. Each card expands to reveal item lines, quantities, line totals, and full delivery details. Persisted across sessions.
 
-<p float="left">
-  <img src="screenshots/orders_screen.jpg" width="280" alt="My Orders Screen" />
+<p>
+  <img src="screenshots/orders_screen.jpg" width="260" alt="My Orders" />
 </p>
 
 ---
 
 ### Wishlist
-Heart-toggle on every product card saves items to a persistent wishlist grid, rehydrated on next launch.
+Heart icon on every product card (home, detail, wishlist grid) toggles the wishlist. The grid is **rehydrated from disk** on the next launch so saved items are never lost.
 
-<p float="left">
-  <img src="screenshots/wishlist_screen.jpg" width="280" alt="Wishlist Screen" />
+<p>
+  <img src="screenshots/wishlist_screen.jpg" width="260" alt="Wishlist" />
 </p>
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-|---|---|
-| Framework | Flutter 3.x (Dart 3.10+) |
-| Architecture | MVP — Model / Repository / Presenter / View |
-| State Management | Provider (`ChangeNotifier` + interfaces) |
-| Networking | `http` package |
-| Image Caching | `cached_network_image` |
-| Local Persistence | `shared_preferences` (cart, wishlist, orders) |
-| Skeleton Loading | `shimmer` |
-| Ratings UI | `flutter_rating_bar` |
-| Connectivity | `connectivity_plus` |
-| Data Source | [DummyJSON](https://dummyjson.com) public API |
 
 ---
 
 ## Architecture
 
-The app follows **MVP (Model–View–Presenter)**. Views never hold business logic; presenters expose immutable state via `ChangeNotifier`; repositories abstract all data access.
+### Pattern: MVP (Model – View – Presenter)
 
 ```
-lib/
-├── main.dart                        # App entry, MultiProvider setup
-├── models/
-│   ├── product.dart                 # Product — fromJson / toJson
-│   ├── cart_item.dart               # CartItem (product + quantity) — fromJson / toJson
-│   └── order.dart                   # Placed order — fromJson / toJson
-├── contracts/
-│   ├── products_contract.dart       # IProductsPresenter, LoadState, SortOption
-│   ├── cart_contract.dart           # ICartPresenter
-│   ├── wishlist_contract.dart       # IWishlistPresenter
-│   └── orders_contract.dart        # IOrdersPresenter
-├── repositories/
-│   └── product_repository.dart     # Thin wrapper — delegates to ApiService
-├── services/
-│   └── api_service.dart            # HTTP client (DummyJSON), typed ApiException
-├── presenters/
-│   ├── products_presenter.dart     # Catalog, search, categories, sort, pagination
-│   ├── cart_presenter.dart         # Cart CRUD + SharedPreferences persistence
-│   ├── wishlist_presenter.dart     # Wishlist toggle + SharedPreferences persistence
-│   └── orders_presenter.dart      # Order history + SharedPreferences persistence
-├── screens/
-│   ├── home_screen.dart            # Product grid, search, category chips, deals strip
-│   ├── product_detail_screen.dart  # Image gallery, rating, add-to-cart, similar products
-│   ├── cart_screen.dart            # Cart list, qty controls, checkout CTA
-│   ├── checkout_screen.dart        # Order form, validation, place order
-│   ├── order_success_screen.dart   # Confirmation with order details
-│   ├── wishlist_screen.dart        # Saved products grid
-│   └── orders_screen.dart         # Order history with expandable cards
-├── widgets/
-│   ├── product_card.dart           # Grid card with discount badge, wishlist toggle
-│   ├── skeleton_loader.dart        # Shimmer skeleton for loading state
-│   ├── error_view.dart             # Error + retry UI / empty state UI
-│   ├── connectivity_banner.dart    # Animated offline banner
-│   ├── deals_section.dart          # Horizontal hot-deals strip (≥15% off)
-│   └── sort_bottom_sheet.dart      # Sort options bottom sheet
-└── theme/
-    └── app_theme.dart              # Material 3 theme (colours, shapes)
+┌──────────────────────────────────────────────────────────┐
+│                         VIEW                             │
+│  (Screens & Widgets — zero business logic, only UI)      │
+│  Reads state via Provider.watch / Selector               │
+│  Calls actions via Provider.read → presenter method      │
+└──────────────────┬───────────────────────────────────────┘
+                   │  implements
+┌──────────────────▼───────────────────────────────────────┐
+│               CONTRACTS  (interfaces)                    │
+│  IProductsPresenter  ICartPresenter                      │
+│  IWishlistPresenter  IOrdersPresenter                    │
+└──────────────────┬───────────────────────────────────────┘
+                   │  concrete implementation
+┌──────────────────▼───────────────────────────────────────┐
+│                    PRESENTER                             │
+│  Extends ChangeNotifier — owns all state & business logic│
+│  Calls repository for data, mutates state, notifies UI   │
+└──────────────────┬───────────────────────────────────────┘
+                   │
+┌──────────────────▼───────────────────────────────────────┐
+│                  REPOSITORY                              │
+│  ProductRepository — thin adapter over ApiService        │
+│  Injected via constructor → swapped with FakeRepository  │
+│  in tests without touching any presenter or screen code  │
+└──────────────────┬───────────────────────────────────────┘
+                   │
+┌──────────────────▼───────────────────────────────────────┐
+│               SERVICE / DATA SOURCES                     │
+│  ApiService — HTTP client, typed ApiException            │
+│  SharedPreferences — JSON persistence (cart/wish/orders) │
+└──────────────────────────────────────────────────────────┘
 ```
 
-**State flow:** All screens `watch` / `read` a presenter via `Provider`. No `setState` for business logic. Cart, wishlist, and orders are serialised to JSON and persisted via `SharedPreferences` on every mutation, then rehydrated on app start.
+### Why MVP over BLoC or Riverpod?
+
+- **Simplicity for a demo scope** — `ChangeNotifier` is part of Flutter's core; no extra mental model needed
+- **Fully testable** — every presenter is tested against its interface via a `FakeRepository`; no HTTP, no disk I/O
+- **Swap-friendly** — the View only knows the `IXxxPresenter` contract; swapping to BLoC means touching only the presenter files
+
+### State Flow
+
+```
+User action (e.g. "Add to Cart")
+  → View calls  context.read<CartPresenter>().addProduct(p)
+  → Presenter   updates _items map, calls _persist(), notifyListeners()
+  → Provider    rebuilds only the Selector<CartPresenter, bool> widgets
+                that subscribed to this product's cart state
+  → SharedPrefs updated asynchronously in the background
+```
 
 ---
 
 ## Features
 
-### Core
-- Product catalog — infinite-scroll grid loaded from REST API
-- Product detail — image gallery with thumbnail strip, star rating, stock status, discount badge
-- Add to Cart with quantity controls on both the detail screen and the cart
-- Cart — per-item totals, cart total, quantity +/−, swipe-to-delete, clear-all
-- Cart persisted across app restarts
-- Checkout — name / address / phone form with validation, full order summary
-- Order confirmation screen with unique order ID
-- Loading skeleton UI and error state with retry button
+### Core (Required)
+- [x] Product catalog — paginated grid (30 items/page, infinite scroll)
+- [x] Product detail — image gallery, star rating, discount price, stock indicator
+- [x] Add to Cart with quantity controls on both detail and cart screens
+- [x] Cart — quantity +/−, remove item, clear all, grand total
+- [x] Cart persisted to SharedPreferences — survives app restarts
+- [x] Checkout — name / address / phone form with full validation
+- [x] Order placed confirmation with unique order ID
+- [x] Loading skeleton (shimmer) and error state with retry button
+- [x] Empty state views on all list screens
 
 ### Bonus
-- Category filter chips (30+ categories fetched from API)
-- Full-text search with 500 ms debounce
-- Sort by: Default / Price Low→High / Price High→Low / Top Rated
-- Hot Deals strip — products with ≥ 15 % discount, sorted by discount %
-- Wishlist — heart toggle on every card, persisted offline
-- Order history — all past orders with itemised breakdown
-- Similar products carousel on the detail screen (same category, lazy-loaded)
-- Connectivity banner — animated "No internet" bar appears / disappears live
+- [x] Category filter chips — 30+ categories fetched from the API
+- [x] Full-text search with 500 ms debounce (live as you type)
+- [x] Sort by: Default / Price Low→High / Price High→Low / Top Rated
+- [x] Hot Deals strip — products with ≥ 15% discount, sorted by discount %
+- [x] Wishlist — heart toggle on every card, persisted offline
+- [x] Order history — expandable cards with full item breakdown
+- [x] Similar products carousel (lazy-loaded, shimmer while pending)
+- [x] Connectivity banner — animated slide-in "No internet" bar
+- [x] Hero shared-element transition: grid card → product detail image
+- [x] Staggered entrance animation for product cards on first load
+- [x] Animated cart badge counter with scale transition
+
+---
+
+## Tech Stack
+
+| Layer | Choice | Why |
+|---|---|---|
+| Framework | Flutter 3.x / Dart 3.10+ | Cross-platform, fast, Material 3 support |
+| Architecture | MVP + Repository pattern | Clean separation, testable, interface-driven |
+| State Management | Provider (`ChangeNotifier`) | Built-in, simple, sufficient for this scope |
+| Networking | `http` | Lightweight; no interceptors needed |
+| Image Caching | `cached_network_image` | Disk + memory cache, shimmer placeholder |
+| Persistence | `shared_preferences` | Key-value JSON; suitable for cart/wishlist size |
+| Skeleton Loading | `shimmer` | Smooth perceived-performance during loads |
+| Ratings UI | `flutter_rating_bar` | Pixel-perfect star display |
+| Connectivity | `connectivity_plus` | Real-time network state stream |
+| Data Source | DummyJSON REST API | 194 products, no auth, no cost |
+
+---
+
+## Project Structure
+
+```
+lib/
+├── main.dart                        # App entry — MultiProvider with all 4 presenters
+│
+├── models/                          # Pure data classes, zero Flutter dependencies
+│   ├── product.dart                 # fromJson / toJson (round-trips via SharedPrefs)
+│   ├── cart_item.dart               # copyWith pattern for immutable mutation
+│   └── order.dart                   # ISO-8601 date serialisation
+│
+├── contracts/                       # Abstract interfaces — View depends on these, not concretes
+│   ├── products_contract.dart       # IProductsPresenter + LoadState + SortOption enums
+│   ├── cart_contract.dart           # ICartPresenter
+│   ├── wishlist_contract.dart       # IWishlistPresenter
+│   └── orders_contract.dart         # IOrdersPresenter
+│
+├── repositories/                    # Data-access adapters (injectable in tests)
+│   └── product_repository.dart      # Wraps ApiService — swap with FakeRepository in tests
+│
+├── services/
+│   └── api_service.dart             # HTTP client — all errors normalised to ApiException
+│
+├── presenters/                      # Business logic — implement contracts, extend ChangeNotifier
+│   ├── products_presenter.dart      # Catalog, pagination, search, category, sort, deals cache
+│   ├── cart_presenter.dart          # Cart CRUD + O(1) map lookup + SharedPrefs persistence
+│   ├── wishlist_presenter.dart      # Toggle logic + persistence
+│   └── orders_presenter.dart        # Order creation + reverse-chronological list + persistence
+│
+├── screens/                         # Views — read presenters, no business logic
+│   ├── splash_screen.dart           # Animated logo → HomeScreen after 2.6 s
+│   ├── home_screen.dart             # CustomScrollView with SliverAppBar + SliverGrid
+│   ├── product_detail_screen.dart   # Hero image, gallery, similar products FutureBuilder
+│   ├── cart_screen.dart             # ListView with ValueKey + bottom summary bar
+│   ├── checkout_screen.dart         # Form validation + simulated processing delay
+│   ├── order_success_screen.dart    # Confirmation card + popUntil(isFirst)
+│   ├── wishlist_screen.dart         # GridView reusing ProductCard
+│   └── orders_screen.dart           # ExpansionTile order cards
+│
+├── widgets/                         # Reusable, stateless/stateful UI components
+│   ├── product_card.dart            # RepaintBoundary + Selector for scoped rebuilds
+│   ├── deals_section.dart           # Horizontal scroll strip
+│   ├── skeleton_loader.dart         # Shimmer card matching ProductCard layout
+│   ├── error_view.dart              # ErrorView + EmptyView
+│   ├── connectivity_banner.dart     # SizeTransition animated offline banner
+│   └── sort_bottom_sheet.dart       # ChangeNotifierProvider.value re-injection
+│
+└── theme/
+    └── app_theme.dart               # Centralised Material 3 theme — colours, shapes, transitions
+```
 
 ---
 
 ## Unit Tests
 
-61 unit tests covering all presenters, models, and the service layer.
+**61 tests — all passing.** No real network calls or disk I/O in any test.
 
 ```bash
 flutter test
-# 61 tests — all passing
 ```
 
-Tests live in `test/` and use a `_FakeRepository` to avoid real HTTP calls.
+```
+test/
+├── models/
+│   ├── product_test.dart          # fromJson, discountedPrice, hasDiscount
+│   └── cart_item_test.dart        # total computation, copyWith immutability
+├── presenters/
+│   ├── products_presenter_test.dart  # init, error state, deals caching, sort, search, category
+│   ├── cart_presenter_test.dart      # add/remove/increment/decrement/total/clear/notify
+│   ├── wishlist_presenter_test.dart  # toggle/contains/notify
+│   └── orders_presenter_test.dart   # placeOrder, ordering, persistence round-trip
+├── services/
+│   └── api_exception_test.dart    # message, catchability
+└── widget_test.dart               # Smoke test — app boots without errors
+```
+
+**Test strategy:** `ProductsPresenter` is injected with a `_FakeRepository` that returns canned data or throws on demand — no mocking framework needed. `CartPresenter` and `WishlistPresenter` use `SharedPreferences.setMockInitialValues({})` to isolate disk I/O.
 
 ---
 
 ## Setup & Running
 
 ### Prerequisites
-- Flutter SDK ≥ 3.10 — [Install Flutter](https://docs.flutter.dev/get-started/install)
-- Android Studio or VS Code with Flutter extension
-- Android emulator or physical device (Android 5.0+ / minSdk 21)
+
+| Tool | Version |
+|---|---|
+| Flutter SDK | ≥ 3.10 |
+| Dart | ≥ 3.0 |
+| Android Studio / VS Code | Latest |
+| Android device / emulator | API 21+ (Android 5.0) |
 
 ### Steps
 
@@ -190,51 +307,79 @@ cd miniShop
 # 2. Install dependencies
 flutter pub get
 
-# 3. Run
+# 3. Run on connected device or emulator
 flutter run
 
-# 4. Build release APK
+# 4. Run all unit tests
+flutter test
+
+# 5. Build a release APK
 flutter build apk --release
-# → build/app/outputs/flutter-apk/app-release.apk
+# Output: build/app/outputs/flutter-apk/app-release.apk
 ```
 
-No API keys or environment variables required — the app works immediately.
+> No API keys, `.env` files, or backend setup required. The app works out of the box.
 
 ---
 
-## API
+## API Reference
 
-**DummyJSON** — `https://dummyjson.com`
+**Base URL:** `https://dummyjson.com`
 
-| Endpoint | Purpose |
-|---|---|
-| `GET /products?limit=30&skip=N` | Paginated product catalog |
-| `GET /products/categories` | Category chip list |
-| `GET /products/category/:slug` | Filter by category |
-| `GET /products/search?q=:query` | Full-text search |
+| Method | Endpoint | Used For |
+|---|---|---|
+| GET | `/products?limit=30&skip=N` | Paginated catalog (infinite scroll) |
+| GET | `/products/categories` | Category chip list |
+| GET | `/products/category/:slug` | Category filter |
+| GET | `/products/search?q=:query` | Full-text product search |
 
-194 products across 30+ categories. Fetched 30 at a time with infinite scroll.
+All responses are normalised through `ApiService._fetchProducts()`. Every error path (socket, timeout, HTTP 4xx/5xx) throws a typed `ApiException` so presenters handle one error type instead of multiple exception classes.
+
+---
+
+## Design Decisions & Trade-offs
+
+| Decision | What was chosen | Why | What I'd change at scale |
+|---|---|---|---|
+| State management | Provider + `ChangeNotifier` | Simplest setup; presenters behind interfaces are already swap-ready | Riverpod for auto-disposal and compile-safe reading |
+| Persistence | `SharedPreferences` (JSON) | Zero boilerplate for key-value data | SQLite / Isar for relational order history and offline catalog |
+| Networking | `http` package | No interceptors or retry logic needed for a demo | Dio for interceptors, auth token refresh, and retry strategies |
+| Pagination | Offset-based (`skip`) | DummyJSON only supports offset; simple to implement | Cursor-based for stable results when items are inserted/deleted |
+| Search | Server-side (DummyJSON `/search`) | Avoids downloading the entire catalog upfront | Algolia or local Fts5 SQLite index for instant offline search |
+| Image caching | `cached_network_image` | Handles disk+memory cache automatically | Pre-warm cache on home screen using `precacheImage` |
+| Deals list | Cached in `_deals` field | Avoids O(n) filter+sort on every widget rebuild | No change needed at this scale |
+
+### Performance choices worth noting
+
+- **`RepaintBoundary`** wraps every `ProductCard` — Flutter can skip repainting the card raster when unrelated state above it changes
+- **`Selector<T,S>`** replaces `Consumer` wherever possible — only the specific field (e.g. `cart.contains(id)`) triggers a rebuild, not the entire cart state
+- **`ValueKey(product.id)`** on grid items — Flutter matches existing elements by key on refresh, preventing unnecessary widget disposal and recreation
+- **`Future.microtask()`** in presenter constructors — defers async disk reads to after the first frame, avoiding "setState during build" errors
+- **`cacheExtent: 600`** on the wishlist grid — pre-renders cards 600 px outside the viewport for smoother scrolling
+
+---
+
+## Limitations
+
+- **No real payment** — checkout is a UI demo; no payment gateway is integrated
+- **No authentication** — delivery details are entered fresh each time
+- **Order history is local only** — no backend sync; orders are lost if app data is cleared
+- **Offline search** — search requires a network connection (uses DummyJSON's search endpoint)
+- **Image quality** — images are served by DummyJSON; some are low-resolution stock photos
 
 ---
 
 ## Permissions
 
 ```xml
-<uses-permission android:name="android.permission.INTERNET"/>
-<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 ```
 
-No location, contacts, storage, or camera permissions.
+No location, contacts, camera, or storage permissions requested.
 
 ---
 
-## Limitations & Trade-offs
+## Author
 
-| Decision | Rationale |
-|---|---|
-| Provider over Bloc / Riverpod | Simpler for a demo; presenters are behind interfaces so swapping is straightforward |
-| DummyJSON | Zero setup; 194 real products with images, ratings, discounts |
-| SharedPreferences for persistence | Sufficient for key-value JSON; SQLite / Isar would be better for larger datasets |
-| `http` over Dio | No interceptors or retry logic needed; keeps the dependency tree minimal |
-
-**Future scope:** user authentication, SQLite order history, push notifications, product reviews, dark mode, deep links.
+**Asif Saifi** — [asifsaifi92@gmail.com](mailto:asifsaifi92@gmail.com)
