@@ -57,8 +57,10 @@ class CartScreen extends StatelessWidget {
                   physics: const BouncingScrollPhysics(
                       parent: AlwaysScrollableScrollPhysics()),
                   itemCount: cart.items.length,
-                  itemBuilder: (_, i) =>
-                      _CartItemTile(item: cart.items[i]),
+                  itemBuilder: (_, i) => _CartItemTile(
+                        key: ValueKey(cart.items[i].product.id),
+                        item: cart.items[i],
+                      ),
                 ),
               ),
               _buildSummary(context, cart),
@@ -140,7 +142,7 @@ class CartScreen extends StatelessWidget {
 class _CartItemTile extends StatelessWidget {
   final CartItem item;
 
-  const _CartItemTile({required this.item});
+  const _CartItemTile({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {

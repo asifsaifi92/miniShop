@@ -2,11 +2,11 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 import '../models/product.dart';
 import '../presenters/cart_presenter.dart';
 import '../presenters/wishlist_presenter.dart';
 import '../services/api_service.dart';
-import '../theme/app_theme.dart';
 import 'cart_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -320,6 +320,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return FutureBuilder<List<Product>>(
       future: _similarFuture,
       builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return _buildSimilarSkeleton();
+        }
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
           return const SizedBox.shrink();
         }
@@ -400,7 +403,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
-                                      color: AppTheme.primary,
+                                      color: Theme.of(context).colorScheme.primary,
                                     ),
                                   ),
                                 ],
@@ -417,6 +420,40 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildSimilarSkeleton() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Divider(height: 1),
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 10),
+          child: Text('You May Also Like',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        ),
+        SizedBox(
+          height: 210,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
+            itemCount: 4,
+            itemBuilder: (_, _) => Shimmer.fromColors(
+              baseColor: Colors.grey.shade300,
+              highlightColor: Colors.grey.shade100,
+              child: Container(
+                width: 130,
+                margin: const EdgeInsets.only(right: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

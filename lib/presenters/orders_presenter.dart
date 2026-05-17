@@ -4,7 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../contracts/orders_contract.dart';
 import '../models/cart_item.dart';
 import '../models/order.dart';
-import '../models/product.dart';
 
 class OrdersPresenter extends ChangeNotifier implements IOrdersPresenter {
   final List<Order> _orders = [];
@@ -41,34 +40,13 @@ class OrdersPresenter extends ChangeNotifier implements IOrdersPresenter {
   }
 
   Future<void> _persist() async {
-    final prefs = await SharedPreferences.getInstance();
-    final data = _orders
-        .map((o) => {
-              'id': o.id,
-              'total': o.total,
-              'name': o.name,
-              'address': o.address,
-              'phone': o.phone,
-              'placedAt': o.placedAt.toIso8601String(),
-              'items': o.items
-                  .map((i) => {
-                        'quantity': i.quantity,
-                        'id': i.product.id,
-                        'title': i.product.title,
-                        'description': i.product.description,
-                        'price': i.product.price,
-                        'discountPercentage': i.product.discountPercentage,
-                        'rating': i.product.rating,
-                        'stock': i.product.stock,
-                        'brand': i.product.brand,
-                        'category': i.product.category,
-                        'thumbnail': i.product.thumbnail,
-                        'images': i.product.images,
-                      })
-                  .toList(),
-            })
-        .toList();
-    await prefs.setString(_prefKey, jsonEncode(data));
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+          _prefKey, jsonEncode(_orders.map((o) => o.toJson()).toList()));
+    } catch (e) {
+      debugPrint('[OrdersPresenter] Failed to persist orders: $e');
+    }
   }
 
   Future<void> _load() async {
@@ -78,36 +56,7 @@ class OrdersPresenter extends ChangeNotifier implements IOrdersPresenter {
       if (raw == null) return;
       final List<dynamic> data = jsonDecode(raw);
       for (final o in data) {
-        final items = (o['items'] as List<dynamic>? ?? []).map((i) {
-          final product = Product(
-            id: (i['id'] as num?)?.toInt() ?? 0,
-            title: i['title'] as String? ?? '',
-            description: i['description'] as String? ?? '',
-            price: (i['price'] as num?)?.toDouble() ?? 0,
-            discountPercentage:
-                (i['discountPercentage'] as num?)?.toDouble() ?? 0,
-            rating: (i['rating'] as num?)?.toDouble() ?? 0,
-            stock: (i['stock'] as num?)?.toInt() ?? 0,
-            brand: i['brand'] as String? ?? '',
-            category: i['category'] as String? ?? '',
-            thumbnail: i['thumbnail'] as String? ?? '',
-            images: List<String>.from(i['images'] as List? ?? []),
-          );
-          return CartItem(
-              product: product,
-              quantity: (i['quantity'] as num?)?.toInt() ?? 1);
-        }).toList();
-
-        _orders.add(Order(
-          id: o['id'] as String? ?? '',
-          items: items,
-          total: (o['total'] as num?)?.toDouble() ?? 0,
-          name: o['name'] as String? ?? '',
-          address: o['address'] as String? ?? '',
-          phone: o['phone'] as String? ?? '',
-          placedAt: DateTime.tryParse(o['placedAt'] as String? ?? '') ??
-              DateTime.now(),
-        ));
+        _orders.add(Order.fromJson(Map<String, dynamic>.from(o as Map)));
       }
       notifyListeners();
     } catch (e) {

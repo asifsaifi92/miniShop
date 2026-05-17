@@ -33,24 +33,6 @@ class ApiService {
     return _fetchProducts(uri);
   }
 
-  Future<Product> getProduct(int id) async {
-    try {
-      final response =
-          await http.get(Uri.parse('$_base/products/$id')).timeout(_timeout);
-      _checkStatus(response);
-      return Product.fromJson(jsonDecode(response.body));
-    } on SocketException {
-      throw ApiException('No internet connection');
-    } on TimeoutException {
-      throw ApiException('Request timed out. Please try again.');
-    } on HttpException {
-      throw ApiException('Network error');
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException('Something went wrong');
-    }
-  }
-
   Future<List<String>> getCategories() async {
     try {
       final response = await http

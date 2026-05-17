@@ -12,4 +12,14 @@ class CartItem {
         product: product,
         quantity: quantity ?? this.quantity,
       );
+
+  Map<String, dynamic> toJson() => {
+        ...product.toJson(),
+        'quantity': quantity,
+      };
+
+  factory CartItem.fromJson(Map<String, dynamic> json) => CartItem(
+        product: Product.fromJson(json),
+        quantity: (json['quantity'] as num?)?.toInt() ?? 1,
+      );
 }

@@ -32,22 +32,8 @@ class WishlistPresenter extends ChangeNotifier implements IWishlistPresenter {
   Future<void> _persist() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final data = _items.values
-          .map((p) => {
-                'id': p.id,
-                'title': p.title,
-                'description': p.description,
-                'price': p.price,
-                'discountPercentage': p.discountPercentage,
-                'rating': p.rating,
-                'stock': p.stock,
-                'brand': p.brand,
-                'category': p.category,
-                'thumbnail': p.thumbnail,
-                'images': p.images,
-              })
-          .toList();
-      await prefs.setString(_prefKey, jsonEncode(data));
+      await prefs.setString(
+          _prefKey, jsonEncode(_items.values.map((p) => p.toJson()).toList()));
     } catch (e) {
       debugPrint('[WishlistPresenter] Failed to persist wishlist: $e');
     }
@@ -60,20 +46,8 @@ class WishlistPresenter extends ChangeNotifier implements IWishlistPresenter {
       if (raw == null) return;
       final List<dynamic> data = jsonDecode(raw);
       for (final item in data) {
-        final product = Product(
-          id: (item['id'] as num?)?.toInt() ?? 0,
-          title: item['title'] as String? ?? '',
-          description: item['description'] as String? ?? '',
-          price: (item['price'] as num?)?.toDouble() ?? 0,
-          discountPercentage:
-              (item['discountPercentage'] as num?)?.toDouble() ?? 0,
-          rating: (item['rating'] as num?)?.toDouble() ?? 0,
-          stock: (item['stock'] as num?)?.toInt() ?? 0,
-          brand: item['brand'] as String? ?? '',
-          category: item['category'] as String? ?? '',
-          thumbnail: item['thumbnail'] as String? ?? '',
-          images: List<String>.from(item['images'] as List? ?? []),
-        );
+        final product =
+            Product.fromJson(Map<String, dynamic>.from(item as Map));
         _items[product.id] = product;
       }
       notifyListeners();

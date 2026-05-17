@@ -30,6 +30,20 @@ class Product {
 
   bool get hasDiscount => discountPercentage > 0;
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'description': description,
+        'price': price,
+        'discountPercentage': discountPercentage,
+        'rating': rating,
+        'stock': stock,
+        'brand': brand,
+        'category': category,
+        'thumbnail': thumbnail,
+        'images': images,
+      };
+
   factory Product.fromJson(Map<String, dynamic> json) {
     return Product(
       id: (json['id'] as num?)?.toInt() ?? 0,
@@ -39,7 +53,7 @@ class Product {
       discountPercentage:
           (json['discountPercentage'] as num?)?.toDouble() ?? 0,
       rating: (json['rating'] as num?)?.toDouble() ?? 0,
-      stock: json['stock'] as int? ?? 0,
+      stock: (json['stock'] as num?)?.toInt() ?? 0,
       brand: json['brand'] as String? ?? '',
       category: json['category'] as String? ?? '',
       thumbnail: json['thumbnail'] as String? ?? '',

@@ -80,23 +80,8 @@ class CartPresenter extends ChangeNotifier implements ICartPresenter {
   Future<void> _persist() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final data = _items.values
-          .map((e) => {
-                'id': e.product.id,
-                'title': e.product.title,
-                'price': e.product.price,
-                'discountPercentage': e.product.discountPercentage,
-                'rating': e.product.rating,
-                'stock': e.product.stock,
-                'brand': e.product.brand,
-                'category': e.product.category,
-                'thumbnail': e.product.thumbnail,
-                'description': e.product.description,
-                'images': e.product.images,
-                'quantity': e.quantity,
-              })
-          .toList();
-      await prefs.setString(_prefKey, jsonEncode(data));
+      await prefs.setString(
+          _prefKey, jsonEncode(_items.values.map((e) => e.toJson()).toList()));
     } catch (e) {
       debugPrint('[CartPresenter] Failed to persist cart: $e');
     }
@@ -109,23 +94,9 @@ class CartPresenter extends ChangeNotifier implements ICartPresenter {
       if (raw == null) return;
       final List<dynamic> data = jsonDecode(raw);
       for (final item in data) {
-        final product = Product(
-          id: (item['id'] as num?)?.toInt() ?? 0,
-          title: item['title'] as String? ?? '',
-          description: item['description'] as String? ?? '',
-          price: (item['price'] as num?)?.toDouble() ?? 0,
-          discountPercentage:
-              (item['discountPercentage'] as num?)?.toDouble() ?? 0,
-          rating: (item['rating'] as num?)?.toDouble() ?? 0,
-          stock: (item['stock'] as num?)?.toInt() ?? 0,
-          brand: item['brand'] as String? ?? '',
-          category: item['category'] as String? ?? '',
-          thumbnail: item['thumbnail'] as String? ?? '',
-          images: List<String>.from(item['images'] as List? ?? []),
-        );
-        _items[product.id] = CartItem(
-            product: product,
-            quantity: (item['quantity'] as num?)?.toInt() ?? 1);
+        final cartItem =
+            CartItem.fromJson(Map<String, dynamic>.from(item as Map));
+        _items[cartItem.product.id] = cartItem;
       }
       notifyListeners();
     } catch (e) {

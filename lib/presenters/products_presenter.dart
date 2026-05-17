@@ -8,6 +8,7 @@ class ProductsPresenter extends ChangeNotifier implements IProductsPresenter {
 
   List<Product> _products = [];
   List<Product> _filtered = [];
+  List<Product> _deals = [];
   List<String> _categories = [];
   String _selectedCategory = 'all';
   String _searchQuery = '';
@@ -25,9 +26,7 @@ class ProductsPresenter extends ChangeNotifier implements IProductsPresenter {
   List<Product> get products => _filtered;
 
   @override
-  List<Product> get deals =>
-      _products.where((p) => p.discountPercentage >= 15).toList()
-        ..sort((a, b) => b.discountPercentage.compareTo(a.discountPercentage));
+  List<Product> get deals => _deals;
 
   @override
   List<String> get categories => ['all', ..._categories];
@@ -104,6 +103,8 @@ class ProductsPresenter extends ChangeNotifier implements IProductsPresenter {
       }
 
       _filtered = _applySorting(_products);
+      _deals = _products.where((p) => p.discountPercentage >= 15).toList()
+        ..sort((a, b) => b.discountPercentage.compareTo(a.discountPercentage));
       _state = LoadState.loaded;
     } catch (e) {
       _errorMessage = e.toString();
