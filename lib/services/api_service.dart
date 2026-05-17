@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -40,6 +41,8 @@ class ApiService {
       return Product.fromJson(jsonDecode(response.body));
     } on SocketException {
       throw ApiException('No internet connection');
+    } on TimeoutException {
+      throw ApiException('Request timed out. Please try again.');
     } on HttpException {
       throw ApiException('Network error');
     } catch (e) {
@@ -55,9 +58,14 @@ class ApiService {
           .timeout(_timeout);
       _checkStatus(response);
       final List<dynamic> data = jsonDecode(response.body);
-      return data.map((e) => e['slug'].toString()).toList();
+      return data
+          .map((e) => e['slug']?.toString() ?? '')
+          .where((s) => s.isNotEmpty)
+          .toList();
     } on SocketException {
       throw ApiException('No internet connection');
+    } on TimeoutException {
+      throw ApiException('Request timed out. Please try again.');
     } on HttpException {
       throw ApiException('Network error');
     } catch (e) {
@@ -75,6 +83,8 @@ class ApiService {
       return products.map((e) => Product.fromJson(e)).toList();
     } on SocketException {
       throw ApiException('No internet connection');
+    } on TimeoutException {
+      throw ApiException('Request timed out. Please try again.');
     } on HttpException {
       throw ApiException('Network error');
     } catch (e) {

@@ -55,7 +55,7 @@ class ProductsPresenter extends ChangeNotifier implements IProductsPresenter {
 
   @override
   Future<void> init() async {
-    if (_state == LoadState.loaded) return;
+    if (_state == LoadState.loaded || _state == LoadState.loading) return;
     await _loadCategories();
     await loadProducts(refresh: true);
   }
