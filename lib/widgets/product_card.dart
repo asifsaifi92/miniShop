@@ -142,20 +142,26 @@ class ProductCard extends StatelessWidget {
 
   Widget _buildPrice(ColorScheme cs) {
     if (product.hasDiscount) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
         children: [
           Text(
             '\$${product.discountedPrice.toStringAsFixed(2)}',
             style: TextStyle(
                 color: cs.primary, fontWeight: FontWeight.bold, fontSize: 14),
           ),
-          Text(
-            '\$${product.price.toStringAsFixed(2)}',
-            style: const TextStyle(
-                decoration: TextDecoration.lineThrough,
-                color: Colors.grey,
-                fontSize: 11),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              '\$${product.price.toStringAsFixed(2)}',
+              style: const TextStyle(
+                  decoration: TextDecoration.lineThrough,
+                  color: Colors.grey,
+                  fontSize: 10),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       );
