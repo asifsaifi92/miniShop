@@ -30,23 +30,27 @@ class WishlistPresenter extends ChangeNotifier implements IWishlistPresenter {
   }
 
   Future<void> _persist() async {
-    final prefs = await SharedPreferences.getInstance();
-    final data = _items.values
-        .map((p) => {
-              'id': p.id,
-              'title': p.title,
-              'description': p.description,
-              'price': p.price,
-              'discountPercentage': p.discountPercentage,
-              'rating': p.rating,
-              'stock': p.stock,
-              'brand': p.brand,
-              'category': p.category,
-              'thumbnail': p.thumbnail,
-              'images': p.images,
-            })
-        .toList();
-    await prefs.setString(_prefKey, jsonEncode(data));
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final data = _items.values
+          .map((p) => {
+                'id': p.id,
+                'title': p.title,
+                'description': p.description,
+                'price': p.price,
+                'discountPercentage': p.discountPercentage,
+                'rating': p.rating,
+                'stock': p.stock,
+                'brand': p.brand,
+                'category': p.category,
+                'thumbnail': p.thumbnail,
+                'images': p.images,
+              })
+          .toList();
+      await prefs.setString(_prefKey, jsonEncode(data));
+    } catch (e) {
+      debugPrint('[WishlistPresenter] Failed to persist wishlist: $e');
+    }
   }
 
   Future<void> _load() async {

@@ -37,7 +37,7 @@ class OrderSuccessScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Thank you, ${order.name.split(' ').first}!',
+                'Thank you, ${order.name.trim().split(' ').where((w) => w.isNotEmpty).firstOrNull ?? order.name}!',
                 style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
               ),
               const SizedBox(height: 24),

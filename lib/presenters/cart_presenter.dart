@@ -78,24 +78,28 @@ class CartPresenter extends ChangeNotifier implements ICartPresenter {
   }
 
   Future<void> _persist() async {
-    final prefs = await SharedPreferences.getInstance();
-    final data = _items.values
-        .map((e) => {
-              'id': e.product.id,
-              'title': e.product.title,
-              'price': e.product.price,
-              'discountPercentage': e.product.discountPercentage,
-              'rating': e.product.rating,
-              'stock': e.product.stock,
-              'brand': e.product.brand,
-              'category': e.product.category,
-              'thumbnail': e.product.thumbnail,
-              'description': e.product.description,
-              'images': e.product.images,
-              'quantity': e.quantity,
-            })
-        .toList();
-    await prefs.setString(_prefKey, jsonEncode(data));
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final data = _items.values
+          .map((e) => {
+                'id': e.product.id,
+                'title': e.product.title,
+                'price': e.product.price,
+                'discountPercentage': e.product.discountPercentage,
+                'rating': e.product.rating,
+                'stock': e.product.stock,
+                'brand': e.product.brand,
+                'category': e.product.category,
+                'thumbnail': e.product.thumbnail,
+                'description': e.product.description,
+                'images': e.product.images,
+                'quantity': e.quantity,
+              })
+          .toList();
+      await prefs.setString(_prefKey, jsonEncode(data));
+    } catch (e) {
+      debugPrint('[CartPresenter] Failed to persist cart: $e');
+    }
   }
 
   Future<void> _loadFromPrefs() async {

@@ -47,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _onSearchChanged(String query) {
     _debounce?.cancel();
-    if (query.isEmpty) {
+    if (query.trim().isEmpty) {
       context.read<ProductsPresenter>().clearSearch();
       return;
     }
