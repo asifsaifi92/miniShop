@@ -227,28 +227,36 @@ class _CartButtonState extends State<_CartButton>
 
   @override
   Widget build(BuildContext context) {
+    const btnStyle = ButtonStyle(
+      minimumSize: WidgetStatePropertyAll(Size(0, 34)),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      padding: WidgetStatePropertyAll(
+          EdgeInsets.symmetric(horizontal: 10)),
+    );
+
     return ScaleTransition(
       scale: _scale,
       child: SizedBox(
         width: double.infinity,
-        height: 30,
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 200),
           child: widget.inCart
               ? OutlinedButton.icon(
                   key: const ValueKey('added'),
                   onPressed: _onTap,
-                  icon: const Icon(Icons.check, size: 14),
-                  label:
-                      const Text('Added', style: TextStyle(fontSize: 12)),
+                  style: btnStyle,
+                  icon: const Icon(Icons.check_rounded, size: 15),
+                  label: const Text('Added',
+                      style: TextStyle(fontSize: 12)),
                 )
               : FilledButton.icon(
                   key: const ValueKey('add'),
                   onPressed: _onTap,
-                  icon: const Icon(Icons.add_shopping_cart, size: 14),
-                  label: const Text('Add', style: TextStyle(fontSize: 12)),
-                  style: FilledButton.styleFrom(
-                      minimumSize: Size.zero, padding: EdgeInsets.zero),
+                  style: btnStyle,
+                  icon: const Icon(Icons.add_shopping_cart_rounded,
+                      size: 15),
+                  label: const Text('Add to Cart',
+                      style: TextStyle(fontSize: 12)),
                 ),
         ),
       ),
